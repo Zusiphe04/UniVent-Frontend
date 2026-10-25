@@ -26,11 +26,10 @@ export const cancelEvent = async (id) => {
 };
 
 export const approveEvent = async (id) => {
-  const response = await client.patch(`/api/events/${id}/approve`);
+const response = await client.patch(`/api/admin/events/${id}/approve`);
   return response.data;
 };
 
 export const disableEvent = async (id) => {
-  const response = await client.patch(`/api/events/${id}/disable`);
-  return response.data;
+const response = await client.patch(`/api/admin/events/${id}/disable`);  return response.data;
 };
