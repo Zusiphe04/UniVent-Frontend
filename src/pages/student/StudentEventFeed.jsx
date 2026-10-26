@@ -27,7 +27,7 @@ import { getEvents } from "../../api/events";
  * merged, swap <EventCardItem /> for the shared component.
  */
 
-const CATEGORIES = ["All", "Tech", "Sports", "Social", "Academic"];
+const CATEGORIES = ["All", "Workshop", "Career", "Competition", "Sports", "Academic"];
 const PAGE_SIZE = 9;
 
 const dateFormatter = new Intl.DateTimeFormat("en-ZA", {
@@ -48,12 +48,17 @@ function toDate(value) {
 }
 
 function normalizeEvent(raw) {
-  const venue = typeof raw.venue === "object" ? raw.venue?.name : raw.venue;
+  const venue =
+    raw.venueName ??
+    (typeof raw.venue === "object"
+      ? raw.venue?.venueName ?? raw.venue?.name
+      : raw.venue);
   const organizer =
     typeof raw.organizer === "object"
       ? raw.organizer?.name
       : raw.organizer ?? raw.organizerName;
   const start =
+    toDate(raw.dateTime) ??
     toDate(raw.startsAt) ??
     toDate(raw.startDateTime) ??
     toDate(raw.eventDate) ??

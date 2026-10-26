@@ -27,7 +27,17 @@
  * `startDateTime`, or `capacity` vs `maxAttendance` / `maximumAttendance`.
  */
 
-export const EVENT_CATEGORIES = ["Tech", "Sports", "Social", "Academic"];
+export const EVENT_CATEGORIES = [
+  "Workshop",
+  "Career",
+  "Competition",
+  "Sports",
+  "Orientation",
+  "Academic",
+  "Cultural",
+  "Social",
+  "Other",
+];
 
 export const EMPTY_CREATE_EVENT_FORM = {
   name: "",
@@ -49,7 +59,10 @@ export function normalizeVenue(raw) {
   if (!raw || typeof raw !== "object") return null;
   const id = raw.id ?? raw.venueId;
   if (id == null || id === "") return null;
-  const name = typeof raw.name === "string" && raw.name.trim() ? raw.name.trim() : "Unnamed venue";
+  const displayName = raw.name ?? raw.venueName;
+  const name = typeof displayName === "string" && displayName.trim()
+    ? displayName.trim()
+    : "Unnamed venue";
   return { id, name };
 }
 
@@ -116,12 +129,12 @@ export function validateCreateEventForm(form, now = new Date()) {
 export function buildEventCreateRequest(form) {
   const capacity = Number(form.capacity);
   return {
-    name: form.name.trim(),
+    title: form.name.trim(),
     description: form.description.trim(),
     category: form.category,
-    startsAt: toLocalIsoDateTime(form.date, form.time),
+    dateTime: toLocalIsoDateTime(form.date, form.time),
     venueId: form.venueId,
-    capacity,
+    maxAttendees: capacity,
   };
 }
 

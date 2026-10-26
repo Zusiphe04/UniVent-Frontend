@@ -28,6 +28,7 @@ const STATUS_MAP = {
   ONGOING: { label: "Ongoing", Icon: CirclePlay, tone: "green" },
   COMPLETED: { label: "Completed", Icon: CircleCheck, tone: "slate" },
   APPROVED: { label: "Approved", Icon: BadgeCheck, tone: "green" },
+  ACTIVE: { label: "Active", Icon: BadgeCheck, tone: "green" },
   DISABLED: { label: "Disabled", Icon: Ban, tone: "red" },
 };
 
