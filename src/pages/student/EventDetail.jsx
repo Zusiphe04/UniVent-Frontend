@@ -47,12 +47,17 @@ function toDate(value) {
 }
 
 function normalizeEvent(raw) {
-  const venue = typeof raw.venue === "object" ? raw.venue?.name : raw.venue;
+  const venue =
+    raw.venueName ??
+    (typeof raw.venue === "object"
+      ? raw.venue?.venueName ?? raw.venue?.name
+      : raw.venue);
   const organizer =
     typeof raw.organizer === "object"
       ? raw.organizer?.name
       : raw.organizer ?? raw.organizerName;
-  const capacity = raw.capacity ?? raw.maxAttendance ?? raw.maximumAttendance ?? null;
+  const capacity =
+    raw.capacity ?? raw.maxAttendees ?? raw.maxAttendance ?? raw.maximumAttendance ?? null;
   const spots =
     raw.availableSpots ??
     raw.spotsRemaining ??
@@ -62,7 +67,12 @@ function normalizeEvent(raw) {
     id: raw.id ?? raw.eventId,
     title: raw.title ?? raw.name ?? "Untitled event",
     category: raw.category ?? "General",
-    start: toDate(raw.startsAt) ?? toDate(raw.startDateTime) ?? toDate(raw.eventDate) ?? toDate(raw.date),
+    start:
+      toDate(raw.dateTime) ??
+      toDate(raw.startsAt) ??
+      toDate(raw.startDateTime) ??
+      toDate(raw.eventDate) ??
+      toDate(raw.date),
     end: toDate(raw.endsAt) ?? toDate(raw.endDateTime) ?? toDate(raw.endTime),
     venue: venue ?? "Venue to be announced",
     organizer: organizer ?? "",
