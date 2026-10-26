@@ -45,7 +45,9 @@ export default function Navbar({ unreadOverride }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
-  const fetched = useUnreadCount({ enabled: unreadOverride === undefined });
+  const fetched = useUnreadCount({
+    enabled: unreadOverride === undefined && user?.role === "STUDENT",
+  });
   const unread = unreadOverride ?? fetched;
 
   const links = NAV_BY_ROLE[user?.role] ?? [];
