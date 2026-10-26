@@ -20,8 +20,8 @@ export default function EditEvent() {
   const load = useCallback(async () => {
     setLoading(true); setError("");
     const [eventResult, venuesResult] = await Promise.allSettled([getEvent(id), getVenues()]);
-    if (eventResult.status === "fulfilled") { const event = eventResult.value; setForm({ title: event.title ?? "", category: event.category ?? "Workshop", organizingDepartment: event.organizingDepartment ?? "", description: event.description ?? "", dateTime: localInputDateTime(event.dateTime), endDateTime: localInputDateTime(event.endDateTime), venueId: event.venueId ?? event.venue?.id ?? "", capacity: event.capacity ?? "" }); }
-    if (venuesResult.status === "fulfilled") setVenues(Array.isArray(venuesResult.value) ? venuesResult.value : venuesResult.value?.content ?? venuesResult.value?.venues ?? []);
+    if (eventResult.status === "fulfilled") { const event = eventResult.value; setForm({ title: event.title ?? "", category: event.category ?? "Workshop", organizingDepartment: event.organizingDepartment ?? "", description: event.description ?? "", dateTime: localInputDateTime(event.dateTime), endDateTime: localInputDateTime(event.endDateTime), venueId: event.venueId ?? event.venue?.id ?? "", capacity: event.capacity ?? event.maxAttendees ?? "", imageUrl: event.imageUrl ?? null }); }
+    if (venuesResult.status === "fulfilled") { const list = Array.isArray(venuesResult.value) ? venuesResult.value : venuesResult.value?.content ?? venuesResult.value?.venues ?? []; setVenues(list.map((venue) => ({ ...venue, id: venue.id ?? venue.venueId, name: venue.name ?? venue.venueName }))); }
     const failed = [eventResult, venuesResult].find((result) => result.status === "rejected");
     if (failed) setError(failed.reason?.response?.data?.message || "Event information could not be loaded.");
     setLoading(false);
@@ -36,7 +36,7 @@ export default function EditEvent() {
   const submit = async (event) => {
     event.preventDefault(); setError(""); setSaving(true);
     try {
-      await updateEvent(id, { title: form.title.trim(), category: form.category, organizingDepartment: form.organizingDepartment.trim(), description: form.description.trim(), dateTime: new Date(form.dateTime).toISOString(), endDateTime: new Date(form.endDateTime).toISOString(), venueId: form.venueId, capacity: Number(form.capacity) });
+      await updateEvent(id, { title: form.title.trim(), category: form.category, description: form.description.trim(), dateTime: new Date(form.dateTime).toISOString(), endDateTime: form.endDateTime ? new Date(form.endDateTime).toISOString() : null, venueId: form.venueId, imageUrl: form.imageUrl, maxAttendees: Number(form.capacity) });
       navigate("/organizer", { replace: true });
     } catch (requestError) { setError(requestError.response?.data?.message || "The event could not be updated."); }
     finally { setSaving(false); }

@@ -3,10 +3,12 @@ import { CircleAlert, Search, ShieldCheck, UserRound, UserRoundX } from "lucide-
 import { approveOrganizer, disableUser, getAdminUsers } from "../../api/admin";
 import StatusBadge from "../../components/shared/StatusBadge";
 
+import { useAuth } from "../../hooks/useAuth";
 const asList = (data) => Array.isArray(data) ? data : data?.content ?? data?.users ?? [];
 const roleLabel = (role) => ({ STUDENT: "Student", ORGANIZER: "Organizer", ADMIN: "Administrator" }[role] ?? role ?? "—");
 
 export default function AdminUsers() {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [query, setQuery] = useState("");
   const [role, setRole] = useState("ALL");
@@ -16,7 +18,7 @@ export default function AdminUsers() {
 
   const loadUsers = useCallback(async () => {
     setLoading(true); setError("");
-    try { setUsers(asList(await getAdminUsers())); }
+    try { setUsers(asList(await getAdminUsers()).map((user) => ({ ...user, status: user.accountStatus ?? user.status }))); }
     catch (requestError) { setError(requestError.response?.data?.message || "Users could not be loaded."); }
     finally { setLoading(false); }
   }, []);
@@ -32,6 +34,7 @@ export default function AdminUsers() {
   }, [users, query, role]);
 
   const runAction = async (user, action) => {
+    if (action === disableUser && String(user.id) === String(currentUser?.userId)) { setError("You cannot disable your own administrator account."); return; }
     setBusyId(user.id); setError("");
     try { await action(user.id); await loadUsers(); }
     catch (requestError) { setError(requestError.response?.data?.message || "The account could not be updated."); }
@@ -49,7 +52,7 @@ export default function AdminUsers() {
             <label className="flex items-center gap-2 text-sm text-slate-600">Role<select value={role} onChange={(event) => setRole(event.target.value)} className="h-10 rounded-lg border border-slate-200 bg-white px-3 font-medium text-slate-900 outline-none focus:border-sky-600"><option value="ALL">All roles</option><option value="STUDENT">Students</option><option value="ORGANIZER">Organizers</option><option value="ADMIN">Administrators</option></select></label>
           </div>
           <div className="mt-5 overflow-x-auto"><table className="w-full min-w-[700px] border-collapse text-left text-sm"><thead><tr className="border-y border-slate-100 text-xs uppercase tracking-wide text-slate-500"><th className="px-3 py-3 font-semibold">User</th><th className="px-3 py-3 font-semibold">Role</th><th className="px-3 py-3 font-semibold">Faculty / organization</th><th className="px-3 py-3 font-semibold">Status</th><th className="px-3 py-3 font-semibold">Actions</th></tr></thead><tbody className="divide-y divide-slate-100">
-            {!loading && visibleUsers.map((user) => { const status = user.status ?? (user.enabled === false ? "DISABLED" : user.approved === false ? "PENDING" : "APPROVED"); const pendingOrganizer = user.role === "ORGANIZER" && ["PENDING", "PENDING_APPROVAL"].includes(status); const disabled = user.enabled === false || status === "DISABLED"; return <tr key={user.id} className="hover:bg-slate-50"><td className="px-3 py-4"><div className="font-semibold text-slate-900">{user.name ?? "—"}</div><div className="mt-1 text-xs text-slate-500">{user.email ?? "—"}</div><div className="mt-1 text-xs text-slate-400">{user.studentNumber ?? user.staffNumber ?? ""}</div></td><td className="px-3 py-4">{roleLabel(user.role)}</td><td className="px-3 py-4">{user.faculty ?? user.organizationName ?? user.department ?? "—"}</td><td className="px-3 py-4"><StatusBadge status={status} className="text-xs" /></td><td className="px-3 py-4"><div className="flex gap-2">{pendingOrganizer && <button disabled={busyId === user.id} onClick={() => runAction(user, approveOrganizer)} className="inline-flex items-center gap-1 rounded-md bg-sky-700 px-2.5 py-1.5 text-xs font-semibold text-white disabled:opacity-50"><ShieldCheck size={14} />Approve</button>}{!disabled && <button disabled={busyId === user.id} onClick={() => runAction(user, disableUser)} className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-50"><UserRoundX size={14} />Disable</button>}</div></td></tr>; })}
+            {!loading && visibleUsers.map((user) => { const status = user.status ?? (user.enabled === false ? "DISABLED" : user.approved === false ? "PENDING" : "APPROVED"); const pendingOrganizer = user.role === "ORGANIZER" && ["PENDING", "PENDING_APPROVAL"].includes(status); const disabled = user.enabled === false || status === "DISABLED"; const currentAccount = String(user.id) === String(currentUser?.userId); return <tr key={user.id} className="hover:bg-slate-50"><td className="px-3 py-4"><div className="font-semibold text-slate-900">{user.name ?? "—"}</div><div className="mt-1 text-xs text-slate-500">{user.email ?? "—"}</div><div className="mt-1 text-xs text-slate-400">{user.studentNumber ?? user.staffNumber ?? ""}</div></td><td className="px-3 py-4">{roleLabel(user.role)}</td><td className="px-3 py-4">{user.faculty ?? user.organizationName ?? user.department ?? "—"}</td><td className="px-3 py-4"><StatusBadge status={status} className="text-xs" /></td><td className="px-3 py-4"><div className="flex gap-2">{pendingOrganizer && <button disabled={busyId === user.id} onClick={() => runAction(user, approveOrganizer)} className="inline-flex items-center gap-1 rounded-md bg-sky-700 px-2.5 py-1.5 text-xs font-semibold text-white disabled:opacity-50"><ShieldCheck size={14} />Approve</button>}{!disabled && !currentAccount && <button disabled={busyId === user.id} onClick={() => runAction(user, disableUser)} className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-50"><UserRoundX size={14} />Disable</button>}</div></td></tr>; })}
             {loading && <tr><td colSpan="5" className="px-3 py-16 text-center text-slate-500"><UserRound className="mx-auto mb-3" />Loading users…</td></tr>}
             {!loading && visibleUsers.length === 0 && <tr><td colSpan="5" className="px-3 py-16 text-center text-slate-500"><UserRound className="mx-auto mb-3" />No users match these filters.</td></tr>}
           </tbody></table></div>
